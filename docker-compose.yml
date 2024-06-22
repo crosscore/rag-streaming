@@ -1,8 +1,6 @@
 services:
   frontend:
     build: ./frontend
-    ports:
-      - "8000:8000"
     volumes:
       - ./frontend:/app
     depends_on:
@@ -10,11 +8,11 @@ services:
     environment:
       - BACKEND_URL=http://backend:8001
       - S3_URL=http://localhost:9000
+    ports:
+      - "127.0.0.1:8000:8000"
 
   backend:
     build: ./backend
-    ports:
-      - "8001:8001"
     volumes:
       - ./backend:/app
     depends_on:
@@ -26,6 +24,8 @@ services:
       - DATABASE_URL=postgresql://user:password@pgvector_toc:5432/tocdb
       - S3_URL=http://s3_db:9000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "127.0.0.1:8001:8001"
 
   pgvector_toc:
     build: ./pgvector_toc
@@ -36,14 +36,14 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
     ports:
-      - "5432:5432"
+      - 127.0.0.1:5432:5432"
 
   s3_db:
     build: ./s3_db
     volumes:
       - ./s3_db/data:/data
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
 
 volumes:
   pgvector_data:
