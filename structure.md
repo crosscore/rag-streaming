@@ -4,6 +4,7 @@ rag-streaming/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   ├── static/
+│   │   └── styles.css
 │   └── templates/
 │       └── index.html
 │
@@ -12,7 +13,7 @@ rag-streaming/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── utils/
-│       └── vector_operations.py
+│       └── vector_to_postgres.py
 │
 ├── pgvector_toc/
 │   ├── Dockerfile
