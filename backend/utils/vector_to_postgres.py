@@ -10,8 +10,8 @@ import logging
 load_dotenv()
 
 # ロギングの設定
-os.makedirs('../../log', exist_ok=True)
-logging.basicConfig(filename='../../log/database_connection.log', level=logging.INFO)
+os.makedirs('../log', exist_ok=True)
+logging.basicConfig(filename='../log/database_connection.log', level=logging.INFO)
 
 max_retries = 10
 retry_delay = 2  # 秒
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS toc_table (
 cursor.execute(create_table_query)
 conn.commit()
 
-input_directory = '../../data/csv/vector/'
+input_directory = '../data/csv/vector/'
 csv_files = glob.glob(os.path.join(input_directory, '*.csv'))
 print(f"Found CSV files: {csv_files}")
 

@@ -1,3 +1,5 @@
+# pgvector_toc/Dockerfile
+
 FROM postgres:latest
 
 RUN apt-get update && apt-get install -y \
@@ -15,4 +17,8 @@ RUN cd /tmp && \
 
 RUN echo "alias ls='ls --color=auto'" >> ~/.bashrc
 
-VOLUME ["/var/lib/postgresql/data"]
+# init_pgvector.sqlをコピー
+COPY init_pgvector.sql /docker-entrypoint-initdb.d/
+
+# pgvector拡張機能を有効化
+RUN echo "CREATE EXTENSION IF NOT EXISTS vector;" > /docker-entrypoint-initdb.d/10-create-extension.sql

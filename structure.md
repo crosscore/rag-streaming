@@ -1,41 +1,29 @@
-rag_streaming/
-│
-├── .env
-├── docker-compose.yml
-│
+rag-streaming/
 ├── frontend/
+│   ├── main.py
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   ├── src/
-│   │   ├── main.py
-│   │   └── ...
+│   ├── static/
 │   └── templates/
-│       ├── index.html
-│       └── ...
+│       └── index.html
 │
 ├── backend/
+│   ├── main.py
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   ├── src/
-│   │   ├── main.py
-│   │   ├── return_answer.py
-│   │   └── ...
-│   └── data/
-│       └── csv/
-│           └── vector/
-│               └── ... (vectorized CSV files)
+│   └── utils/
+│       └── vector_operations.py
 │
 ├── pgvector_toc/
 │   ├── Dockerfile
-│   └── init-pgvector.sql
+│   └── init_pgvector.sql
 │
-└── s3_db/
-    ├── Dockerfile
-    ├── app.py
-    └── data/
-        ├── pdf/
-        │   └── ... (PDF files)
-        ├── docx/
-        │   └── ... (DOCX files)
-        └── xlsx/
-            └── ... (XLSX files)
+├── s3_db/
+│   ├── main.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── data/
+│       └── pdf/
+│
+├── docker-compose.yml
+└── .env

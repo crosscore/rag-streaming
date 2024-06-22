@@ -20,8 +20,8 @@ def write_toc_to_csv(toc, pdf_path, csv_output_path):
     df.to_csv(csv_output_path, index=False)
 
 
-pdf_dir = '../../data/pdf/'
-csv_dir = '../../data/csv/original/'
+pdf_dir = '../data/pdf/'
+csv_dir = '../data/csv/original/'
 os.makedirs(csv_dir, exist_ok=True)
 
 pdf_files = glob.glob(os.path.join(pdf_dir, '*.pdf'))

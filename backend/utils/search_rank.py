@@ -26,7 +26,7 @@ def display_results(results):
 SEARCH_INDEX = 0 #検索用のインデックスを指定
 
 # CSVファイルからベクトルを取得
-csv_files = glob.glob('../../data/csv/search_vector/*.csv')
+csv_files = glob.glob('../data/csv/search_vector/*.csv')
 print(f"CSV file path: {csv_files[0]}")
 normalize_search_vector = get_vector_from_csv(csv_files[0], SEARCH_INDEX)
 print(f"Normalized Search Vector: {normalize_search_vector}")

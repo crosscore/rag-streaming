@@ -1,3 +1,5 @@
+# s3_db/Dockerfile
+
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -9,4 +11,4 @@ RUN echo "alias ls='ls --color=auto'" >> ~/.bashrc
 
 COPY . .
 
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]
