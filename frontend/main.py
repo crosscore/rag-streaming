@@ -1,3 +1,5 @@
+# frontend/main.py
+
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -21,14 +23,13 @@ async def websocket_endpoint(websocket: WebSocket):
     async with httpx.AsyncClient() as client:
         while True:
             question = await websocket.receive_text()
-            response = await client.post(f"{BACKEND_URL}/query", json={"question": question})
-            results = response.json()
+            response = await client.post(f"{BACKEND_URL}/search", json={"query": question})
+            results = response.json()["results"]
             formatted_results = [
                 {
-                    "link": f"{S3_URL}/pdf/{result['file_name']}#page={result['page']}",
-                    "title": f"{result['file_name']} - Page {result['page']}",
+                    "link": result['pdf_url'],
+                    "title": result['link_text'],
                     "toc": result['toc'],
-                    "rank": result['rank'],
                     "distance": result['distance']
                 }
                 for result in results

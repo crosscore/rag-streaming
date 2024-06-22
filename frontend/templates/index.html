@@ -1,10 +1,18 @@
+<!-- frontend/templates/index.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Similar TOC Search</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        #results {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Similar TOC Search</h1>
@@ -14,31 +22,35 @@
     <div id="results"></div>
 
     <script>
-        async function search() {
+        const socket = new WebSocket('ws://localhost:8001/ws');
+        const resultsDiv = document.getElementById('results');
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.error) {
+                resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                return;
+            }
+
+            const results = data.results;
+            let resultsHtml = '<h2>Search Results:</h2>';
+            results.forEach((result, index) => {
+                resultsHtml += `
+                    <div>
+                        <h3>${index + 1}. <a href="${result.pdf_url}" target="_blank">${result.link_text}</a></h3>
+                        <p>TOC: ${result.toc}</p>
+                        <p>Distance: ${result.distance.toFixed(4)}</p>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = resultsHtml;
+        };
+
+        function search() {
             const query = document.getElementById('searchQuery').value;
             const topN = parseInt(document.getElementById('topN').value);
-            const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = 'Searching...';
-
-            try {
-                const response = await axios.post('http://localhost:8001/search', { query: query, top_n: topN });
-                const results = response.data.results;
-
-                let resultsHtml = '<h2>Search Results:</h2>';
-                results.forEach((result, index) => {
-                    resultsHtml += `
-                        <div>
-                            <h3>${index + 1}. <a href="${result.pdf_url}" target="_blank">${result.link_text}</a></h3>
-                            <p>TOC: ${result.toc}</p>
-                            <p>Distance: ${result.distance.toFixed(4)}</p>
-                        </div>
-                    `;
-                });
-
-                resultsDiv.innerHTML = resultsHtml;
-            } catch (error) {
-                resultsDiv.innerHTML = `Error: ${error.message}`;
-            }
+            socket.send(JSON.stringify({ query: query, top_n: topN }));
         }
     </script>
 </body>

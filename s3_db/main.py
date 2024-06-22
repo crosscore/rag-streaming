@@ -1,13 +1,17 @@
+# s3_db/main.py
+
 from flask import Flask, send_file, request, abort
+from flask_cors import CORS
 import os
 from PyPDF2 import PdfReader, PdfWriter
 from io import BytesIO
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='/app/data')
+CORS(app, resources={r"/data/pdf/*": {"origins": "http://localhost:8000"}})
 
-@app.route('/pdf/<path:filename>')
+@app.route('/data/pdf/<path:filename>')
 def serve_pdf(filename):
-    file_path = os.path.join('/data/pdf', filename)
+    file_path = os.path.join('/app/data/pdf', filename)
     if not os.path.exists(file_path):
         abort(404)
 

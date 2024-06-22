@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException
+# backend/main.py
+
+from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg2
@@ -38,62 +40,64 @@ embeddings = OpenAIEmbeddings(
     openai_api_key=OPENAI_API_KEY,
 )
 
-class SearchQuery(BaseModel):
-    query: str
-    top_n: int = 3
-
 def normalize_vector(vector):
     norm = np.linalg.norm(vector)
     if norm == 0:
         return vector
     return vector / norm
 
-@app.post("/search")
-async def search(query: SearchQuery):
-    try:
-        # クエリをベクトル化し、正規化
-        query_vector = normalize_vector(embeddings.embed_query(query.query))
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        try:
+            data = await websocket.receive_json()
+            query = data["query"]
+            top_n = data.get("top_n", 3)
 
-        # PostgreSQLに接続
-        conn = psycopg2.connect(
-            dbname=POSTGRES_DB,
-            user=POSTGRES_USER,
-            password=POSTGRES_PASSWORD,
-            host=POSTGRES_HOST,
-            port=POSTGRES_PORT
-        )
-        cursor = conn.cursor()
+            # クエリをベクトル化し、正規化
+            query_vector = normalize_vector(embeddings.embed_query(query))
 
-        # 類似検索クエリの実行
-        similarity_search_query = """
-        SELECT file_name, toc, page, toc_vector, (toc_vector <#> %s::vector) AS distance
-        FROM toc_table
-        ORDER BY distance ASC
-        LIMIT %s;
-        """
-        cursor.execute(similarity_search_query, (query_vector.tolist(), query.top_n))
-        results = cursor.fetchall()
+            # PostgreSQLに接続
+            conn = psycopg2.connect(
+                dbname=POSTGRES_DB,
+                user=POSTGRES_USER,
+                password=POSTGRES_PASSWORD,
+                host=POSTGRES_HOST,
+                port=POSTGRES_PORT
+            )
+            cursor = conn.cursor()
 
-        # 結果の整形
-        formatted_results = [
-            {
-                "file_name": result[0],
-                "toc": result[1],
-                "page": result[2],
-                "distance": float(result[4]),
-                "link_text": f"{result[0]}, p.{result[2]}",
-                "pdf_url": f"{S3_DB_URL}/pdf/{result[0]}?page={result[2]}"
-            }
-            for result in results
-        ]
+            # 類似検索クエリの実行
+            similarity_search_query = """
+            SELECT file_name, toc, page, toc_vector, (toc_vector <#> %s::vector) AS distance
+            FROM toc_table
+            ORDER BY distance ASC
+            LIMIT %s;
+            """
+            cursor.execute(similarity_search_query, (query_vector.tolist(), top_n))
+            results = cursor.fetchall()
 
-        cursor.close()
-        conn.close()
+            # 結果の整形
+            formatted_results = [
+                {
+                    "file_name": result[0],
+                    "toc": result[1],
+                    "page": result[2],
+                    "distance": float(result[4]),
+                    "link_text": f"{result[0]}, p.{result[2]}",
+                    "pdf_url": f"{S3_DB_URL}/data/pdf/{result[0]}?page={result[2]}"
+                }
+                for result in results
+            ]
 
-        return {"results": formatted_results}
+            cursor.close()
+            conn.close()
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+            await websocket.send_json({"results": formatted_results})
+
+        except Exception as e:
+            await websocket.send_json({"error": str(e)})
 
 if __name__ == "__main__":
     import uvicorn
