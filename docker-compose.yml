@@ -36,7 +36,7 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
     ports:
-      - 127.0.0.1:5432:5432"
+      - "127.0.0.1:5432:5432"
 
   s3_db:
     build: ./s3_db
