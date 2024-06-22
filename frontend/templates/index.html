@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat System</title>
+</head>
+<body>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8000/ws");
+
+        socket.onmessage = function(event) {
+            const results = JSON.parse(event.data);
+            const chatBox = document.getElementById("chat-box");
+            let resultsHtml = "<ul>";
+            for (let result of results) {
+                resultsHtml += `<li>
+                    <a href="${result.link}" target="_blank">${result.title}</a>
+                    <br>ToC: ${result.toc}
+                    <br>Rank: ${result.rank}, Distance: ${result.distance.toFixed(4)}
+                </li>`;
+            }
+            resultsHtml += "</ul>";
+            chatBox.innerHTML += resultsHtml;
+        };
+
+        function sendMessage() {
+            const input = document.getElementById("message-input");
+            const message = input.value;
+            socket.send(message);
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML += `<p>You: ${message}</p>`;
+            input.value = "";
+        }
+    </script>
+</body>
+</html>
