@@ -18,7 +18,7 @@ docker build --pull --build-arg PG_MAJOR=16 -t myuser/pgvector .
 # pgvector拡張機能を有効化
 CREATE EXTENSION IF NOT EXISTS vector;
 
-psql -U user -d vectordb
+psql -U user -d tocdb
 
 # コンテナ外部から接続
 psql -h localhost -U user -d toc_db -p 5432

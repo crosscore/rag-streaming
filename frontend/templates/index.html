@@ -1,38 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Chat System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similar TOC Search</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-    <div id="chat-box"></div>
-    <input type="text" id="message-input">
-    <button onclick="sendMessage()">Send</button>
+    <h1>Similar TOC Search</h1>
+    <input type="text" id="searchQuery" placeholder="Enter search query">
+    <input type="number" id="topN" value="3" min="1" max="10">
+    <button onclick="search()">Search</button>
+    <div id="results"></div>
 
     <script>
-        const socket = new WebSocket("ws://localhost:8000/ws");
+        async function search() {
+            const query = document.getElementById('searchQuery').value;
+            const topN = parseInt(document.getElementById('topN').value);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Searching...';
 
-        socket.onmessage = function(event) {
-            const results = JSON.parse(event.data);
-            const chatBox = document.getElementById("chat-box");
-            let resultsHtml = "<ul>";
-            for (let result of results) {
-                resultsHtml += `<li>
-                    <a href="${result.link}" target="_blank">${result.title}</a>
-                    <br>ToC: ${result.toc}
-                    <br>Rank: ${result.rank}, Distance: ${result.distance.toFixed(4)}
-                </li>`;
+            try {
+                const response = await axios.post('http://localhost:8001/search', { query: query, top_n: topN });
+                const results = response.data.results;
+
+                let resultsHtml = '<h2>Search Results:</h2>';
+                results.forEach((result, index) => {
+                    resultsHtml += `
+                        <div>
+                            <h3>${index + 1}. <a href="${result.pdf_url}" target="_blank">${result.link_text}</a></h3>
+                            <p>TOC: ${result.toc}</p>
+                            <p>Distance: ${result.distance.toFixed(4)}</p>
+                        </div>
+                    `;
+                });
+
+                resultsDiv.innerHTML = resultsHtml;
+            } catch (error) {
+                resultsDiv.innerHTML = `Error: ${error.message}`;
             }
-            resultsHtml += "</ul>";
-            chatBox.innerHTML += resultsHtml;
-        };
-
-        function sendMessage() {
-            const input = document.getElementById("message-input");
-            const message = input.value;
-            socket.send(message);
-            const chatBox = document.getElementById("chat-box");
-            chatBox.innerHTML += `<p>You: ${message}</p>`;
-            input.value = "";
         }
     </script>
 </body>

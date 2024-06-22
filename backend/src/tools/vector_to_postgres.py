@@ -19,11 +19,11 @@ retry_delay = 2  # 秒
 for attempt in range(max_retries):
     try:
         conn = psycopg2.connect(
-            dbname="vectordb",
-            user="user",
-            password="password",
+            dbname=os.getenv("POSTGRES_NAME"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
             host="localhost",
-            port="5432"
+            port=os.getenv("POSTGRES_PORT")
         )
         logging.info("Connected to the database successfully on attempt %d", attempt + 1)
         print("Connected to the database successfully")

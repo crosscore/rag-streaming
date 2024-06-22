@@ -7,11 +7,11 @@ import ast
 load_dotenv()
 
 conn = psycopg2.connect(
-    dbname="vectordb",
-    user="user",
-    password="password",
+    dbname=os.getenv("POSTGRES_NAME"),
+    user=os.getenv("POSTGRES_USER"),
+    password=os.getenv("POSTGRES_PASSWORD"),
     host="localhost",
-    port="5432"
+    port=os.getenv("POSTGRES_PORT")
 )
 
 query = "SELECT * FROM toc_table;"

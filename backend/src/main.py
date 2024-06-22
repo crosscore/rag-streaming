@@ -1,45 +1,100 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import httpx
+import psycopg2
+import numpy as np
+from dotenv import load_dotenv
 import os
-from sqlalchemy import create_engine, text
-from openai import OpenAI
+from langchain_openai import OpenAIEmbeddings
+
+load_dotenv()
 
 app = FastAPI()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 本番環境では適切に制限してください
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# OpenAI API keyの設定
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-engine = create_engine(DATABASE_URL)
-client = OpenAI(api_key=OPENAI_API_KEY)
+# データベース接続情報
+POSTGRES_DB = os.getenv("POSTGRES_DB", "tocdb")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "pgvector_toc")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 
-class Query(BaseModel):
-    question: str
+# S3_DB URL
+S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
 
-@app.post("/query")
-async def query(query: Query):
-    # Embed the question
-    response = client.embeddings.create(input=query.question, model="text-embedding-ada-002")
-    question_embedding = response.data[0].embedding
+# OpenAI Embeddingsの初期化
+embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-large",
+    openai_api_key=OPENAI_API_KEY,
+)
 
-    # Query the database
-    with engine.connect() as connection:
-        result = connection.execute(text("""
-            SELECT toc, file_name, page, 1 - (embedding <=> :embedding) AS cosine_similarity
-            FROM documents
-            ORDER BY cosine_similarity DESC
-            LIMIT 3
-        """), {"embedding": question_embedding})
+class SearchQuery(BaseModel):
+    query: str
+    top_n: int = 3
 
-        results = [
+def normalize_vector(vector):
+    norm = np.linalg.norm(vector)
+    if norm == 0:
+        return vector
+    return vector / norm
+
+@app.post("/search")
+async def search(query: SearchQuery):
+    try:
+        # クエリをベクトル化し、正規化
+        query_vector = normalize_vector(embeddings.embed_query(query.query))
+
+        # PostgreSQLに接続
+        conn = psycopg2.connect(
+            dbname=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            host=POSTGRES_HOST,
+            port=POSTGRES_PORT
+        )
+        cursor = conn.cursor()
+
+        # 類似検索クエリの実行
+        similarity_search_query = """
+        SELECT file_name, toc, page, toc_vector, (toc_vector <#> %s::vector) AS distance
+        FROM toc_table
+        ORDER BY distance ASC
+        LIMIT %s;
+        """
+        cursor.execute(similarity_search_query, (query_vector.tolist(), query.top_n))
+        results = cursor.fetchall()
+
+        # 結果の整形
+        formatted_results = [
             {
-                "rank": i + 1,
-                "toc": row.toc,
-                "file_name": row.file_name,
-                "page": row.page,
-                "distance": float(row.cosine_similarity)
+                "file_name": result[0],
+                "toc": result[1],
+                "page": result[2],
+                "distance": float(result[4]),
+                "link_text": f"{result[0]}, p.{result[2]}",
+                "pdf_url": f"{S3_DB_URL}/pdf/{result[0]}?page={result[2]}"
             }
-            for i, row in enumerate(result)
+            for result in results
         ]
 
-    return results
+        cursor.close()
+        conn.close()
+
+        return {"results": formatted_results}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)

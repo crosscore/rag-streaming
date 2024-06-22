@@ -11,13 +11,12 @@ load_dotenv()
 
 app = FastAPI()
 
-# 環境変数の読み込み
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-POSTGRES_NAME = os.getenv("POSTGRES_DB", "vectordb")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "pgvector_db")  # Docker Compose内で使用する場合
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+POSTGRES_NAME = os.getenv("POSTGRES_DB")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 
 # OpenAI Embeddingsの初期化
 embeddings = OpenAIEmbeddings(
@@ -61,9 +60,9 @@ async def query(question: Question):
 
         # 類似検索クエリの実行
         query = """
-        SELECT file_name, toc, page, 1 - (toc_vector <=> %s) AS similarity
+        SELECT file_name, toc, page, 1 - (toc_vector <#> %s) AS distance
         FROM toc_table
-        ORDER BY similarity DESC
+        ORDER BY distance DESC
         LIMIT 3;
         """
         cursor.execute(query, (question_vector.tolist(),))
