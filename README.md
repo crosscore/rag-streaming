@@ -1,4 +1,4 @@
-# rag-streaming-demo
+# rag-streaming
 
 docker compose up --build -d
 
