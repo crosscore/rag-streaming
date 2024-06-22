@@ -16,27 +16,26 @@ rag_streaming/
 ├── backend/
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   └── src/
-│       ├── main.py
-│       ├── return_answer.py
-│       └── ...
+│   ├── src/
+│   │   ├── main.py
+│   │   ├── return_answer.py
+│   │   └── ...
+│   └── data/
+│       └── csv/
+│           └── vector/
+│               └── ... (vectorized CSV files)
 │
 ├── pgvector_toc/
 │   ├── Dockerfile
 │   └── init-pgvector.sql
 │
-├── s3_db/
-│   ├── Dockerfile
-│   ├── app.py
-│   └── data/
-│       └── pdf/
-│           └── ... (PDF files)
-│
-└── data/
-    ├── csv/
-    │   ├── original/
-    │   │   └── ... (original CSV files)
-    │   └── vector/
-    │       └── ... (vectorized CSV files)
-    └── pdf/
-        └── ... (original PDF files)
+└── s3_db/
+    ├── Dockerfile
+    ├── app.py
+    └── data/
+        ├── pdf/
+        │   └── ... (PDF files)
+        ├── docx/
+        │   └── ... (DOCX files)
+        └── xlsx/
+            └── ... (XLSX files)
