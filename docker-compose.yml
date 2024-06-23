@@ -28,12 +28,12 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - S3_DB_URL=${S3_DB_URL}
-      - POSTGRES_URL=postgresql://user:password@pgvector_toc:5432/tocdb
-      - POSTGRES_DB=tocdb
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_HOST=pgvector_toc
-      - POSTGRES_PORT=5432
+      - POSTGRES_TOC_URL=postgresql://user:password@pgvector_toc:5432/tocdb
+      - POSTGRES_TOC_DB=tocdb
+      - POSTGRES_TOC_USER=user
+      - POSTGRES_TOC_PASSWORD=password
+      - POSTGRES_TOC_HOST=pgvector_toc
+      - POSTGRES_TOC_PORT=5432
       - POSTGRES_MANUAL_DB=manualdb
       - POSTGRES_MANUAL_USER=user
       - POSTGRES_MANUAL_PASSWORD=password
@@ -51,9 +51,9 @@ services:
       - ./pgvector_toc/init_pgvector.sql:/docker-entrypoint-initdb.d/init_pgvector.sql
       - pgvector_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=tocdb
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_TOC_DB=tocdb
+      - POSTGRES_TOC_USER=user
+      - POSTGRES_TOC_PASSWORD=password
     ports:
       - "127.0.0.1:5432:5432"
     networks:
@@ -65,9 +65,9 @@ services:
       - ./pgvector_manual/init_pgvector.sql:/docker-entrypoint-initdb.d/init_pgvector.sql
       - pgvector_manual_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=manualdb
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_MANUAL_DB=manualdb
+      - POSTGRES_MANUAL_USER=user
+      - POSTGRES_MANUAL_PASSWORD=password
     ports:
       - "127.0.0.1:5433:5432"
     networks:

@@ -6,15 +6,15 @@ import ast
 
 load_dotenv()
 
-POSTGRES_TOC_NAME = os.getenv("POSTGRES_TOC_NAME")
+POSTGRES_TOC_DB = os.getenv("POSTGRES_TOC_DB")
 POSTGRES_TOC_USER = os.getenv("POSTGRES_TOC_USER")
 POSTGRES_TOC_PASSWORD = os.getenv("POSTGRES_TOC_PASSWORD")
 POSTGRES_TOC_HOST = "localhost"
 POSTGRES_TOC_PORT = os.getenv("POSTGRES_TOC_PORT")
 
 # SQLAlchemyエンジンの作成
-POSTGRES_URL = f"postgresql://{POSTGRES_TOC_USER}:{POSTGRES_TOC_PASSWORD}@{POSTGRES_TOC_HOST}:{POSTGRES_TOC_PORT}/{POSTGRES_TOC_NAME}"
-engine = create_engine(POSTGRES_URL)
+POSTGRES_TOC_URL = f"postgresql://{POSTGRES_TOC_USER}:{POSTGRES_TOC_PASSWORD}@{POSTGRES_TOC_HOST}:{POSTGRES_TOC_PORT}/{POSTGRES_TOC_DB}"
+engine = create_engine(POSTGRES_TOC_URL)
 
 query = "SELECT * FROM toc_table"
 df = pd.read_sql(query, engine)

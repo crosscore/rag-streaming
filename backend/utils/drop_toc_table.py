@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 conn = psycopg2.connect(
-    dbname=os.getenv("POSTGRES_TOC_NAME"),
+    dbname=os.getenv("POSTGRES_TOC_DB"),
     user=os.getenv("POSTGRES_TOC_USER"),
     password=os.getenv("POSTGRES_TOC_PASSWORD"),
     host="localhost",

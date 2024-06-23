@@ -75,14 +75,6 @@ d. PDFストレージ (s3_db):
    - 検索エラーや通信エラーの適切な処理と表示
 
 ## 7. 環境変数
-- OPENAI_API_KEY: OpenAI APIキー
-- S3_DB_URL: PDFストレージサービスのURL
-- POSTGRES_URL: PostgreSQLデータベースの接続URL
-- POSTGRES_DB: データベース名
-- POSTGRES_USER: データベースユーザー名
-- POSTGRES_PASSWORD: データベースパスワード
-- POSTGRES_HOST: データベースホスト
-- POSTGRES_PORT: データベースポート
 
 注: セキュリティ向上のため、機密情報は環境変数として管理。
 

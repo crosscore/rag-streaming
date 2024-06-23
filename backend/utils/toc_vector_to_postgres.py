@@ -21,7 +21,7 @@ retry_delay = 2  # 秒
 for attempt in range(max_retries):
     try:
         conn = psycopg2.connect(
-            dbname=os.getenv("POSTGRES_TOC_NAME"),
+            dbname=os.getenv("POSTGRES_TOC_DB"),
             user=os.getenv("POSTGRES_TOC_USER"),
             password=os.getenv("POSTGRES_TOC_PASSWORD"),
             host="localhost",
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS toc_table (
 cursor.execute(create_table_query)
 conn.commit()
 
-input_directory = '../data/csv/vector/'
+input_directory = '../data/csv/pdf/'
 csv_files = glob.glob(os.path.join(input_directory, '*.csv'))
 print(f"Found CSV files: {csv_files}")
 

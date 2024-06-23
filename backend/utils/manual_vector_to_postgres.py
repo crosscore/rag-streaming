@@ -24,7 +24,7 @@ for attempt in range(max_retries):
             dbname=os.getenv("POSTGRES_MANUAL_DB"),
             user=os.getenv("POSTGRES_MANUAL_USER"),
             password=os.getenv("POSTGRES_MANUAL_PASSWORD"),
-            host=os.getenv("POSTGRES_MANUAL_HOST"),
+            host="localhost",
             port=os.getenv("POSTGRES_MANUAL_PORT")
         )
         logging.info("Connected to the manual database successfully on attempt %d", attempt + 1)

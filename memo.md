@@ -57,3 +57,25 @@ CREATE TABLE IF NOT EXISTS toc_table (
 CREATE INDEX ON toc_table USING hnsw (toc_halfvec halfvec_ip_ops);
 
 \d+ documents
+
+
+# .env
+CHUNK_SIZE=300
+CHUNK_OVERLAP=0
+SEPARATOR="\n\n"
+
+S3_DB_URL=http://localhost:9000
+
+# TOC Database
+POSTGRES_TOC_DB=tocdb
+POSTGRES_TOC_USER=user
+POSTGRES_TOC_PASSWORD=password
+POSTGRES_TOC_HOST=pgvector_toc
+POSTGRES_TOC_PORT=5432
+
+# Manual Database
+POSTGRES_MANUAL_DB=manualdb
+POSTGRES_MANUAL_USER=user
+POSTGRES_MANUAL_PASSWORD=password
+POSTGRES_MANUAL_HOST=pgvector_manual
+POSTGRES_MANUAL_PORT=5432
