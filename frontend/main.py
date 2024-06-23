@@ -22,7 +22,7 @@ async def websocket_endpoint(websocket: WebSocket):
     async with httpx.AsyncClient() as client:
         while True:
             question = await websocket.receive_text()
-            response = await client.post(f"{BACKEND_URL}/search", json={"query": question})
+            response = await client.post(f"{BACKEND_URL}/search", json={"question": question})
             results = response.json()["results"]
             formatted_results = [
                 {

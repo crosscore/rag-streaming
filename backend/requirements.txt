@@ -21,6 +21,7 @@ azure-ai-documentintelligence
 glob2
 psycopg2-binary
 sqlalchemy
+boto3
 
 fastapi
 uvicorn

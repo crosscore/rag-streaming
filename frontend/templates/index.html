@@ -10,7 +10,7 @@
 <body>
     <button id="theme-toggle">テーマ切り替え</button>
     <h1>Similar TOC Search</h1>
-    <input type="text" id="searchQuery" placeholder="Enter search query">
+    <input type="text" id="searchQuestion" placeholder="Enter your question">
     <input type="number" id="topN" value="3" min="1" max="10">
     <button onclick="search()">Search</button>
     <div id="results"></div>
@@ -63,10 +63,10 @@
             };
 
             window.search = function() {
-                const query = document.getElementById('searchQuery').value;
+                const question = document.getElementById('searchQuestion').value;
                 const topN = parseInt(document.getElementById('topN').value);
                 resultsDiv.innerHTML = 'Searching...';
-                socket.send(JSON.stringify({ query: query, top_n: topN }));
+                socket.send(JSON.stringify({ question: question, top_n: topN }));
             };
         }
 

@@ -48,11 +48,11 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive_json()
-            query = data["query"]
+            question = data["question"]
             top_n = data.get("top_n", 3)
 
-            # クエリをベクトル化し、正規化
-            query_vector = normalize_vector(embeddings.embed_query(query))
+            # 文字列をベクトル化し、正規化
+            question_vector = normalize_vector(embeddings.embed_query(question))
 
             conn = psycopg2.connect(
                 dbname=POSTGRES_DB,
@@ -69,7 +69,7 @@ async def websocket_endpoint(websocket: WebSocket):
             ORDER BY distance ASC
             LIMIT %s;
             """
-            cursor.execute(similarity_search_query, (query_vector.tolist(), top_n))
+            cursor.execute(similarity_search_query, (question_vector.tolist(), top_n))
             results = cursor.fetchall()
 
             # 結果の整形
