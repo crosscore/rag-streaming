@@ -11,7 +11,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8001")
-S3_URL = os.getenv("S3_URL", "http://localhost:9000")
 
 @app.get("/")
 async def read_root(request: Request):

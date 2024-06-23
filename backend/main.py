@@ -21,10 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# OpenAI API keyの設定
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# データベース接続情報
 POSTGRES_DB = os.getenv("POSTGRES_DB", "tocdb")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
@@ -34,7 +32,6 @@ POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 # S3_DB URL
 S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
 
-# OpenAI Embeddingsの初期化
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large",
     openai_api_key=OPENAI_API_KEY,
@@ -58,7 +55,6 @@ async def websocket_endpoint(websocket: WebSocket):
             # クエリをベクトル化し、正規化
             query_vector = normalize_vector(embeddings.embed_query(query))
 
-            # PostgreSQLに接続
             conn = psycopg2.connect(
                 dbname=POSTGRES_DB,
                 user=POSTGRES_USER,
@@ -68,7 +64,6 @@ async def websocket_endpoint(websocket: WebSocket):
             )
             cursor = conn.cursor()
 
-            # 類似検索クエリの実行
             similarity_search_query = """
             SELECT file_name, toc, page, toc_vector, (toc_vector <#> %s::vector) AS distance
             FROM toc_table
@@ -86,7 +81,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "page": result[2],
                     "distance": float(result[4]),
                     "link_text": f"{result[0]}, p.{result[2]}",
-                    "pdf_url": f"{S3_DB_URL}/data/pdf/{result[0]}?page={result[2]}"
+                    "pdf_url": f"{S3_DB_URL}/data/pdf/{result[0]}?page={result[2] - 1}"
                 }
                 for result in results
             ]

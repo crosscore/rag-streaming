@@ -9,7 +9,7 @@ services:
       - backend
     environment:
       - BACKEND_URL=http://backend:8001
-      - S3_URL=http://s3_db:9000
+      - S3_DB_URL=http://s3_db:9000
     ports:
       - "127.0.0.1:8000:8000"
     networks:
@@ -27,7 +27,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://user:password@pgvector_toc:5432/tocdb
-      - S3_URL=http://s3_db:9000
+      - S3_DB_URL=http://s3_db:9000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - POSTGRES_DB=tocdb
       - POSTGRES_USER=user
