@@ -10,6 +10,7 @@ rag-streaming/
 │
 ├── backend/
 │   ├── main.py
+│   ├── manual.py
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── utils/
@@ -24,7 +25,9 @@ rag-streaming/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── data/
-│       └── pdf/
+│       ├── pdf/
+│       ├── xlsx/
+│       └── docx/
 │
 ├── docker-compose.yml
 └── .env
