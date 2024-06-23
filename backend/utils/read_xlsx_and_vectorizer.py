@@ -1,3 +1,5 @@
+# backend/utils/read_xlsx_and_vectorizer.py
+
 import os
 import requests
 import pandas as pd
@@ -10,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-S3_DB_URL = os.getenv("S3_DB_URL", "http://s3_db:9000")
+S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
 
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
@@ -55,6 +57,7 @@ def process_and_vectorize_xlsx_file(file_name):
         chunks = text_splitter.split_text(sheet_content)
 
         for chunk in chunks:
+            print("excute: embed_query(chunk)")
             vector = embeddings.embed_query(chunk)
             normalized_vector = normalize_vector(vector).tolist()
             processed_data.append({
@@ -67,6 +70,7 @@ def process_and_vectorize_xlsx_file(file_name):
     return pd.DataFrame(processed_data)
 
 def main():
+    print(f"Using S3_DB_URL: {S3_DB_URL}")
     xlsx_files = get_xlsx_files_from_s3()
 
     for file_name in xlsx_files:

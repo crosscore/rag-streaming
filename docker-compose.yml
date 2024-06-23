@@ -21,6 +21,7 @@ services:
       - ./backend:/app
     depends_on:
       - pgvector_toc
+      - pgvector_manual
       - s3_db
     env_file:
       - .env
@@ -33,6 +34,11 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_HOST=pgvector_toc
       - POSTGRES_PORT=5432
+      - POSTGRES_MANUAL_DB=manualdb
+      - POSTGRES_MANUAL_USER=user
+      - POSTGRES_MANUAL_PASSWORD=password
+      - POSTGRES_MANUAL_HOST=pgvector_manual
+      - POSTGRES_MANUAL_PORT=5432
     ports:
       - "127.0.0.1:8001:8001"
     networks:
@@ -83,3 +89,4 @@ networks:
 
 volumes:
   pgvector_data:
+  pgvector_manual_data:

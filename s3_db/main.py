@@ -1,7 +1,7 @@
 # s3_db/main.py
 
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from PyPDF2 import PdfReader, PdfWriter
@@ -17,6 +17,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/data/xlsx")
+async def list_xlsx_files():
+    xlsx_dir = '/app/data/xlsx'
+    if not os.path.exists(xlsx_dir):
+        raise HTTPException(status_code=404, detail="XLSX directory not found")
+    xlsx_files = [f for f in os.listdir(xlsx_dir) if f.endswith('.xlsx')]
+    return JSONResponse(content=xlsx_files)
 
 @app.get("/data/pdf/{filename:path}")
 async def serve_pdf(filename: str, page: int = Query(None)):
