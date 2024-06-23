@@ -53,6 +53,20 @@ services:
     networks:
       - app-network
 
+  pgvector_manual:
+    build: ./pgvector_manual
+    volumes:
+      - ./pgvector_manual/init_pgvector.sql:/docker-entrypoint-initdb.d/init_pgvector.sql
+      - pgvector_manual_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=manualdb
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "127.0.0.1:5433:5432"
+    networks:
+      - app-network
+
   s3_db:
     build: ./s3_db
     volumes:

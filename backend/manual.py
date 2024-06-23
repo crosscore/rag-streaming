@@ -1,15 +1,23 @@
 # backend/manual.py
 
-import boto3
-import openpyxl
+import os
+import requests
 from io import BytesIO
+import openpyxl
 import psycopg2
 from psycopg2.extras import execute_values
 from langchain_openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
 import numpy as np
-import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+S3_DB_URL = os.getenv("S3_DB_URL", "http://s3_db:9000")
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP"))
+SEPARATOR = os.getenv("SEPARATOR")
 
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large",
@@ -22,29 +30,43 @@ def normalize_vector(vector):
         return vector
     return vector / norm
 
-def get_xlsx_files_from_s3(bucket_name, prefix='data/xlsx/'):
-    s3 = boto3.client('s3')
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    return [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith('.xlsx')]
+def get_xlsx_files_from_s3():
+    response = requests.get(f"{S3_DB_URL}/data/xlsx")
+    if response.status_code == 200:
+        return [file for file in response.json() if file.endswith('.xlsx')]
+    else:
+        print(f"Error fetching XLSX files: {response.status_code}")
+        return []
 
-def process_xlsx_file(bucket_name, file_key):
-    s3 = boto3.client('s3')
-    response = s3.get_object(Bucket=bucket_name, Key=file_key)
-    file_content = response['Body'].read()
+def process_xlsx_file(file_name):
+    response = requests.get(f"{S3_DB_URL}/data/xlsx/{file_name}")
+    if response.status_code != 200:
+        print(f"Error fetching file {file_name}: {response.status_code}")
+        return []
 
-    workbook = openpyxl.load_workbook(filename=BytesIO(file_content), read_only=True)
+    workbook = openpyxl.load_workbook(filename=BytesIO(response.content), read_only=True)
 
     file_data = []
     for sheet_name in workbook.sheetnames:
         sheet = workbook[sheet_name]
+        sheet_content = ""
         for row in sheet.iter_rows(values_only=True):
             if any(cell for cell in row):
-                manual = ','.join(str(cell) if cell is not None else '' for cell in row)
-                file_data.append({
-                    'file_name': file_key.split('/')[-1],
-                    'sheet_name': sheet_name,
-                    'manual': manual
-                })
+                sheet_content += ' '.join(str(cell) if cell is not None else '' for cell in row) + "\n"
+
+        text_splitter = CharacterTextSplitter(
+            chunk_size=CHUNK_SIZE,
+            chunk_overlap=CHUNK_OVERLAP,
+            separator=SEPARATOR
+        )
+        chunks = text_splitter.split_text(sheet_content)
+
+        for chunk in chunks:
+            file_data.append({
+                'file_name': file_name,
+                'sheet_name': sheet_name,
+                'manual': chunk
+            })
 
     return file_data
 
@@ -64,7 +86,7 @@ def create_table_if_not_exists(conn):
             file_name TEXT,
             sheet_name TEXT,
             manual TEXT,
-            manual_vector vector(1536)
+            manual_vector vector(3072)
         )
         """)
     conn.commit()
@@ -88,19 +110,18 @@ def save_to_database(conn, data):
     conn.commit()
 
 def main():
-    bucket_name = 'your-s3-bucket-name'
-    db_connection_string = "postgresql://user:password@host:port/dbname"
+    db_connection_string = "postgresql://user:password@pgvector_manual:5432/manualdb"
 
-    xlsx_files = get_xlsx_files_from_s3(bucket_name)
+    xlsx_files = get_xlsx_files_from_s3()
 
     conn = psycopg2.connect(db_connection_string)
 
     try:
-        for file_key in xlsx_files:
-            print(f"Processing file: {file_key}")
-            file_data = process_xlsx_file(bucket_name, file_key)
+        for file_name in xlsx_files:
+            print(f"Processing file: {file_name}")
+            file_data = process_xlsx_file(file_name)
             save_to_database(conn, file_data)
-            print(f"Processed and saved data from {file_key}")
+            print(f"Processed and saved data from {file_name}")
 
     except Exception as e:
         print(f"An error occurred: {e}")

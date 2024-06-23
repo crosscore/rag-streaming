@@ -1,5 +1,8 @@
 # rag-streaming
 
+ports:
+    - "<Host Port>:<Container Port>"
+
 docker compose up --build -d
 
 docker compose ps

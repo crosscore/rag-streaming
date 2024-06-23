@@ -33,11 +33,11 @@ print(f"Normalized Search Vector: {normalize_search_vector}")
 
 # PostgreSQLに接続
 conn = psycopg2.connect(
-    dbname=os.getenv("POSTGRES_DB", "tocdb"),
-    user=os.getenv("POSTGRES_USER", "user"),
-    password=os.getenv("POSTGRES_PASSWORD", "password"),
+    dbname=os.getenv("POSTGRES_TOC_DB", "tocdb"),
+    user=os.getenv("POSTGRES_TOC_USER", "user"),
+    password=os.getenv("POSTGRES_TOC_PASSWORD", "password"),
     host="localhost",
-    port=os.getenv("POSTGRES_PORT", "5432")
+    port=os.getenv("POSTGRES_TOC_PORT", "5432")
 )
 cursor = conn.cursor()
 

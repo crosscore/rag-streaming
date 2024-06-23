@@ -23,11 +23,11 @@ app.add_middleware(
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-POSTGRES_DB = os.getenv("POSTGRES_DB", "tocdb")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "pgvector_toc")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+POSTGRES_TOC_DB = os.getenv("POSTGRES_TOC_DB", "tocdb")
+POSTGRES_TOC_USER = os.getenv("POSTGRES_TOC_USER", "user")
+POSTGRES_TOC_PASSWORD = os.getenv("POSTGRES_TOC_PASSWORD", "password")
+POSTGRES_TOC_HOST = os.getenv("POSTGRES_TOC_HOST", "pgvector_toc")
+POSTGRES_TOC_PORT = os.getenv("POSTGRES_TOC_PORT", "5432")
 
 S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
 
@@ -55,11 +55,11 @@ async def websocket_endpoint(websocket: WebSocket):
             question_vector = normalize_vector(embeddings.embed_query(question))
 
             conn = psycopg2.connect(
-                dbname=POSTGRES_DB,
-                user=POSTGRES_USER,
-                password=POSTGRES_PASSWORD,
-                host=POSTGRES_HOST,
-                port=POSTGRES_PORT
+                dbname=POSTGRES_TOC_DB,
+                user=POSTGRES_TOC_USER,
+                password=POSTGRES_TOC_PASSWORD,
+                host=POSTGRES_TOC_HOST,
+                port=POSTGRES_TOC_PORT
             )
             cursor = conn.cursor()
 

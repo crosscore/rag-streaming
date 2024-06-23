@@ -6,16 +6,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 conn = psycopg2.connect(
-    dbname=os.getenv("POSTGRES_NAME"),
-    user=os.getenv("POSTGRES_USER"),
-    password=os.getenv("POSTGRES_PASSWORD"),
+    dbname=os.getenv("POSTGRES_MANUAL_NAME"),
+    user=os.getenv("POSTGRES_MANUAL_USER"),
+    password=os.getenv("POSTGRES_MANUAL_PASSWORD"),
     host="localhost",
-    port=os.getenv("POSTGRES_PORT")
+    port=os.getenv("POSTGRES_MANUAL_PORT")
 )
 cursor = conn.cursor()
 
 # テーブルを完全に削除
-drop_table_query = sql.SQL("DROP TABLE {} CASCADE").format(sql.Identifier('toc_table'))
+drop_table_query = sql.SQL("DROP TABLE {} CASCADE").format(sql.Identifier('manual_table'))
 
 try:
     cursor.execute(drop_table_query)
@@ -23,7 +23,7 @@ try:
     print("テーブルのデータが完全に削除されました。")
 except Error as e:
     if e.pgcode == '42P01':  # Undefined table
-        print("エラー: テーブル 'toc_table' は存在しません。")
+        print("エラー: テーブルは存在しません。")
     else:
         print(f"エラーが発生しました: {e}")
 finally:
