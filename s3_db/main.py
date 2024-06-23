@@ -26,6 +26,13 @@ async def list_xlsx_files():
     xlsx_files = [f for f in os.listdir(xlsx_dir) if f.endswith('.xlsx')]
     return JSONResponse(content=xlsx_files)
 
+@app.get("/data/xlsx/{filename:path}")
+async def serve_xlsx(filename: str):
+    file_path = os.path.join('/app/data/xlsx', filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
 @app.get("/data/pdf/{filename:path}")
 async def serve_pdf(filename: str, page: int = Query(None)):
     file_path = os.path.join('/app/data/pdf', filename)

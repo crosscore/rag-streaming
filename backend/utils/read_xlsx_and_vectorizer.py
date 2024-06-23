@@ -31,13 +31,14 @@ def normalize_vector(vector):
 def get_xlsx_files_from_s3():
     response = requests.get(f"{S3_DB_URL}/data/xlsx")
     if response.status_code == 200:
+        print(f"response:{response}")
         return [file for file in response.json() if file.endswith('.xlsx')]
     else:
         print(f"Error fetching XLSX files: {response.status_code}")
         return []
 
 def process_and_vectorize_xlsx_file(file_name):
-    response = requests.get(f"{S3_DB_URL}/data/xlsx/{file_name}")
+    response = requests.get(f"{S3_DB_URL}/data/xlsx/{file_name}", stream=True)
     if response.status_code != 200:
         print(f"Error fetching file {file_name}: {response.status_code}")
         return pd.DataFrame()
