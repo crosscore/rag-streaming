@@ -13,5 +13,3 @@ COPY . .
 
 # 必要なディレクトリが存在することを確認
 RUN mkdir -p static templates
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
