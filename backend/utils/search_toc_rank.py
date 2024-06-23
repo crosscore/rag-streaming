@@ -1,3 +1,5 @@
+# backend/utils/search_toc_rank.py
+
 import psycopg2
 import numpy as np
 from dotenv import load_dotenv
@@ -6,6 +8,12 @@ import pandas as pd
 import glob
 
 load_dotenv()
+
+def get_env_variable(var_name, default=None):
+    value = os.getenv(var_name, default)
+    if value is None:
+        raise ValueError(f"Environment variable {var_name} is not set")
+    return value
 
 def get_vector_from_csv(csv_file_path, row_number):
     df = pd.read_csv(csv_file_path)
@@ -23,37 +31,54 @@ def display_results(results):
     else:
         print("No results found")
 
+
+TOC_DB_NAME = get_env_variable("TOC_DB_NAME")
+TOC_DB_USER = get_env_variable("TOC_DB_USER")
+TOC_DB_PASSWORD = get_env_variable("TOC_DB_PASSWORD")
+
+is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
+if is_docker:
+    TOC_DB_HOST = get_env_variable("TOC_DB_INTERNAL_HOST")
+    TOC_DB_PORT = get_env_variable("TOC_DB_INTERNAL_PORT")
+else:
+    TOC_DB_HOST = get_env_variable("TOC_DB_EXTERNAL_HOST", "localhost")
+    TOC_DB_PORT = get_env_variable("TOC_DB_EXTERNAL_PORT")
+
 SEARCH_INDEX = 0 #検索用のインデックスを指定
 
-# CSVファイルからベクトルを取得
-csv_files = glob.glob('../data/csv/search_vector/*.csv')
-print(f"CSV file path: {csv_files[0]}")
-normalize_search_vector = get_vector_from_csv(csv_files[0], SEARCH_INDEX)
-print(f"Normalized Search Vector: {normalize_search_vector}")
+try:
+    csv_files = glob.glob('../data/csv/search_vector/*.csv')
+    if not csv_files:
+        raise FileNotFoundError("No CSV files found in the specified directory")
 
-# PostgreSQLに接続
-conn = psycopg2.connect(
-    dbname=os.getenv("POSTGRES_TOC_DB", "tocdb"),
-    user=os.getenv("POSTGRES_TOC_USER", "user"),
-    password=os.getenv("POSTGRES_TOC_PASSWORD", "password"),
-    host="localhost",
-    port=os.getenv("POSTGRES_TOC_PORT", "5432")
-)
-cursor = conn.cursor()
+    print(f"CSV file path: {csv_files[0]}")
+    normalize_search_vector = get_vector_from_csv(csv_files[0], SEARCH_INDEX)
+    print(f"Normalized Search Vector: {normalize_search_vector}")
 
-# 類似検索クエリの実行
-similarity_search_query = """
-SELECT file_name, toc, page, toc_vector, (toc_vector <#> %s::vector) AS distance
-FROM toc_table
-ORDER BY distance ASC
-LIMIT 11;
-"""
-print("Executing similarity search query...\n")
-cursor.execute(similarity_search_query, (normalize_search_vector.tolist(),))
-results = cursor.fetchall()
+    conn = psycopg2.connect(
+        dbname=TOC_DB_NAME,
+        user=TOC_DB_USER,
+        password=TOC_DB_PASSWORD,
+        host=TOC_DB_HOST,
+        port=TOC_DB_PORT
+    )
+    cursor = conn.cursor()
 
-# 検索結果の表示
-display_results(results)
+    similarity_search_query = """
+    SELECT file_name, toc, page, toc_vector, (toc_vector <#> %s::vector) AS distance
+    FROM toc_table
+    ORDER BY distance ASC
+    LIMIT 11;
+    """
+    cursor.execute(similarity_search_query, (normalize_search_vector.tolist(),))
+    results = cursor.fetchall()
+    display_results(results)
 
-cursor.close()
-conn.close()
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+finally:
+    if cursor:
+        cursor.close()
+    if conn:
+        conn.close()

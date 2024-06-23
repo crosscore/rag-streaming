@@ -11,37 +11,33 @@ import logging
 
 load_dotenv()
 
-# ロギングの設定
-os.makedirs('../log', exist_ok=True)
-logging.basicConfig(filename='../log/manual_database_connection.log', level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-max_retries = 10
-retry_delay = 2  # 秒
+is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
 
-for attempt in range(max_retries):
-    try:
-        conn = psycopg2.connect(
-            dbname=os.getenv("POSTGRES_MANUAL_DB"),
-            user=os.getenv("POSTGRES_MANUAL_USER"),
-            password=os.getenv("POSTGRES_MANUAL_PASSWORD"),
-            host="localhost",
-            port=os.getenv("POSTGRES_MANUAL_PORT")
-        )
-        logging.info("Connected to the manual database successfully on attempt %d", attempt + 1)
-        print("Connected to the manual database successfully")
-        break
-    except psycopg2.OperationalError as e:
-        logging.error("Attempt %d failed: %s", attempt + 1, e)
-        print(f"Attempt {attempt + 1} failed: {e}")
-        if attempt < max_retries - 1:
-            print(f"Retrying in {retry_delay} seconds...")
-            time.sleep(retry_delay)
-        else:
-            logging.critical("Max retries reached, failed to connect to the manual database")
-            print("Max retries reached, failed to connect to the manual database")
-            raise
+try:
+    if is_docker:
+        host = os.environ["MANUAL_DB_INTERNAL_HOST"]
+        port = int(os.environ["MANUAL_DB_INTERNAL_PORT"])
+    else:
+        host = os.environ["MANUAL_DB_EXTERNAL_HOST"]
+        port = int(os.environ["MANUAL_DB_EXTERNAL_PORT"])
 
-print("ログファイルに接続結果が記録されました。")
+    conn = psycopg2.connect(
+        dbname=os.environ["MANUAL_DB_NAME"],
+        user=os.environ["MANUAL_DB_USER"],
+        password=os.environ["MANUAL_DB_PASSWORD"],
+        host=host,
+        port=port
+    )
+    logger.info(f"Connected to database: {host}:{port}")
+except KeyError as e:
+    logger.error(f"Environment variable not set: {e}")
+    raise
+except psycopg2.Error as e:
+    logger.error(f"Unable to connect to the database: {e}")
+    raise
 
 cursor = conn.cursor()
 

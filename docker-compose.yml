@@ -27,18 +27,18 @@ services:
       - .env
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - S3_DB_URL=${S3_DB_URL}
-      - POSTGRES_TOC_URL=postgresql://user:password@pgvector_toc:5432/tocdb
-      - POSTGRES_TOC_DB=tocdb
-      - POSTGRES_TOC_USER=user
-      - POSTGRES_TOC_PASSWORD=password
-      - POSTGRES_TOC_HOST=pgvector_toc
-      - POSTGRES_TOC_PORT=5432
-      - POSTGRES_MANUAL_DB=manualdb
-      - POSTGRES_MANUAL_USER=user
-      - POSTGRES_MANUAL_PASSWORD=password
-      - POSTGRES_MANUAL_HOST=pgvector_manual
-      - POSTGRES_MANUAL_PORT=5432
+      - S3_DB_INTERNAL_URL=http://s3_db:9000
+      - S3_DB_EXTERNAL_URL=${S3_DB_EXTERNAL_URL}
+      - TOC_DB_NAME=${TOC_DB_NAME}
+      - TOC_DB_USER=${TOC_DB_USER}
+      - TOC_DB_PASSWORD=${TOC_DB_PASSWORD}
+      - TOC_DB_INTERNAL_HOST=${TOC_DB_INTERNAL_HOST}
+      - TOC_DB_INTERNAL_PORT=${TOC_DB_INTERNAL_PORT}
+      - MANUAL_DB_NAME=${MANUAL_DB_NAME}
+      - MANUAL_DB_USER=${MANUAL_DB_USER}
+      - MANUAL_DB_PASSWORD=${MANUAL_DB_PASSWORD}
+      - MANUAL_DB_INTERNAL_HOST=${MANUAL_DB_INTERNAL_HOST}
+      - MANUAL_DB_INTERNAL_PORT=${MANUAL_DB_INTERNAL_PORT}
     ports:
       - "127.0.0.1:8001:8001"
     networks:
@@ -51,11 +51,11 @@ services:
       - ./pgvector_toc/init_pgvector.sql:/docker-entrypoint-initdb.d/init_pgvector.sql
       - pgvector_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_TOC_DB=tocdb
-      - POSTGRES_TOC_USER=user
-      - POSTGRES_TOC_PASSWORD=password
+      - POSTGRES_DB=${TOC_DB_NAME}
+      - POSTGRES_USER=${TOC_DB_USER}
+      - POSTGRES_PASSWORD=${TOC_DB_PASSWORD}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${TOC_DB_EXTERNAL_PORT}:${TOC_DB_INTERNAL_PORT}"
     networks:
       - app-network
 
@@ -65,11 +65,11 @@ services:
       - ./pgvector_manual/init_pgvector.sql:/docker-entrypoint-initdb.d/init_pgvector.sql
       - pgvector_manual_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_MANUAL_DB=manualdb
-      - POSTGRES_MANUAL_USER=user
-      - POSTGRES_MANUAL_PASSWORD=password
+      - POSTGRES_DB=${MANUAL_DB_NAME}
+      - POSTGRES_USER=${MANUAL_DB_USER}
+      - POSTGRES_PASSWORD=${MANUAL_DB_PASSWORD}
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${MANUAL_DB_EXTERNAL_PORT}:${MANUAL_DB_INTERNAL_PORT}"
     networks:
       - app-network
 
@@ -78,10 +78,10 @@ services:
     volumes:
       - ./s3_db/data:/data
     ports:
-      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:${S3_DB_EXTERNAL_PORT}:${S3_DB_INTERNAL_PORT}"
     networks:
       - app-network
-    command: uvicorn main:app --host 0.0.0.0 --port 9000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port ${S3_DB_INTERNAL_PORT} --reload
 
 networks:
   app-network:

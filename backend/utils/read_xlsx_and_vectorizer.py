@@ -12,13 +12,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
-
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
 SEPARATOR = os.getenv("SEPARATOR", "\n")
-
 XLSX_CSV_OUTPUT_DIR = os.getenv("XLSX_CSV_OUTPUT_DIR", "../data/csv/xlsx")
+
+is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
+if is_docker:
+    S3_DB_URL = os.getenv("S3_DB_INTERNAL_URL", "http://s3_db:9000")
+else:
+    S3_DB_URL = os.getenv("S3_DB_EXTERNAL_URL", "http://localhost:9001")
 
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large",

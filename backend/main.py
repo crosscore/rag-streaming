@@ -21,15 +21,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+def get_env_variable(var_name, default=None):
+    value = os.getenv(var_name, default)
+    if value is None:
+        raise ValueError(f"Environment variable {var_name} is not set")
+    return value
 
-POSTGRES_TOC_DB = os.getenv("POSTGRES_TOC_DB", "tocdb")
-POSTGRES_TOC_USER = os.getenv("POSTGRES_TOC_USER", "user")
-POSTGRES_TOC_PASSWORD = os.getenv("POSTGRES_TOC_PASSWORD", "password")
-POSTGRES_TOC_HOST = os.getenv("POSTGRES_TOC_HOST", "pgvector_toc")
-POSTGRES_TOC_PORT = os.getenv("POSTGRES_TOC_PORT", "5432")
+OPENAI_API_KEY = get_env_variable("OPENAI_API_KEY")
+TOC_DB_NAME = get_env_variable("TOC_DB_NAME")
+TOC_DB_USER = get_env_variable("TOC_DB_USER")
+TOC_DB_PASSWORD = get_env_variable("TOC_DB_PASSWORD")
 
-S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
+# Docker環境かどうかを判定
+is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
+
+if is_docker:
+    TOC_DB_HOST = get_env_variable("TOC_DB_INTERNAL_HOST")
+    TOC_DB_PORT = get_env_variable("TOC_DB_INTERNAL_PORT")
+    S3_DB_URL = get_env_variable("S3_DB_INTERNAL_URL")
+else:
+    TOC_DB_HOST = get_env_variable("TOC_DB_EXTERNAL_HOST", "localhost")
+    TOC_DB_PORT = get_env_variable("TOC_DB_EXTERNAL_PORT")
+    S3_DB_URL = get_env_variable("S3_DB_EXTERNAL_URL")
 
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large",
@@ -55,11 +68,11 @@ async def websocket_endpoint(websocket: WebSocket):
             question_vector = normalize_vector(embeddings.embed_query(question))
 
             conn = psycopg2.connect(
-                dbname=POSTGRES_TOC_DB,
-                user=POSTGRES_TOC_USER,
-                password=POSTGRES_TOC_PASSWORD,
-                host=POSTGRES_TOC_HOST,
-                port=POSTGRES_TOC_PORT
+                dbname=TOC_DB_NAME,
+                user=TOC_DB_USER,
+                password=TOC_DB_PASSWORD,
+                host=TOC_DB_HOST,
+                port=TOC_DB_PORT
             )
             cursor = conn.cursor()
 

@@ -1,3 +1,5 @@
+# backend/utils/postgres_manual_reader_sqlalchemy.py
+
 import os
 import pandas as pd
 from dotenv import load_dotenv
@@ -6,23 +8,41 @@ import ast
 
 load_dotenv()
 
-POSTGRES_MANUAL_NAME = os.getenv("POSTGRES_MANUAL_NAME")
-POSTGRES_MANUAL_USER = os.getenv("POSTGRES_MANUAL_USER")
-POSTGRES_MANUAL_PASSWORD = os.getenv("POSTGRES_MANUAL_PASSWORD")
-POSTGRES_MANUAL_HOST = "localhost"
-POSTGRES_MANUAL_PORT = os.getenv("POSTGRES_MANUAL_PORT")
+def get_env_variable(var_name, default=None):
+    value = os.getenv(var_name, default)
+    if value is None:
+        raise ValueError(f"Environment variable {var_name} is not set")
+    return value
+
+MANUAL_DB_NAME = get_env_variable("MANUAL_DB_NAME")
+MANUAL_DB_USER = get_env_variable("MANUAL_DB_USER")
+MANUAL_DB_PASSWORD = get_env_variable("MANUAL_DB_PASSWORD")
+
+is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
+if is_docker:
+    MANUAL_DB_HOST = get_env_variable("MANUAL_DB_INTERNAL_HOST")
+    MANUAL_DB_PORT = get_env_variable("MANUAL_DB_INTERNAL_PORT")
+else:
+    MANUAL_DB_HOST = get_env_variable("MANUAL_DB_EXTERNAL_HOST", "localhost")
+    MANUAL_DB_PORT = get_env_variable("MANUAL_DB_EXTERNAL_PORT")
 
 # SQLAlchemyエンジンの作成
-POSTGRES_MANUAL_URL = f"postgresql://{POSTGRES_MANUAL_USER}:{POSTGRES_MANUAL_PASSWORD}@{POSTGRES_MANUAL_HOST}:{POSTGRES_MANUAL_PORT}/{POSTGRES_MANUAL_NAME}"
-engine = create_engine(POSTGRES_MANUAL_URL)
+POSTGRES_MANUAL_URL = f"postgresql://{MANUAL_DB_USER}:{MANUAL_DB_PASSWORD}@{MANUAL_DB_HOST}:{MANUAL_DB_PORT}/{MANUAL_DB_NAME}"
 
-query = "SELECT * FROM manual_table"
-df = pd.read_sql(query, engine)
+try:
+    engine = create_engine(POSTGRES_MANUAL_URL)
 
-# manual_vectorカラムをリストに変換
-df['manual_vector'] = df['manual_vector'].apply(ast.literal_eval)
-print(df)
-print("---------")
+    query = "SELECT * FROM manual_table"
+    df = pd.read_sql(query, engine)
 
-for i in range(10):
-    print(len(df['manual_vector'][i]))
+    # manual_vectorカラムをリストに変換
+    df['manual_vector'] = df['manual_vector'].apply(ast.literal_eval)
+    print(df)
+    print("---------")
+
+    for i in range(min(10, len(df))):
+        print(f"Length of manual_vector at index {i}: {len(df['manual_vector'][i])}")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+    raise

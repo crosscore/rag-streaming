@@ -13,3 +13,5 @@ COPY . .
 
 # 必要なディレクトリが存在することを確認
 RUN mkdir -p static templates
+
+ENV IS_DOCKER=true
