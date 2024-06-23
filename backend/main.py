@@ -80,7 +80,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "page": result[2],
                     "distance": float(result[4]),
                     "link_text": f"{result[0]}, p.{result[2]}",
-                    "pdf_url": f"{S3_DB_URL}/data/pdf/{result[0]}?page={result[2] - 1}"
+                    "pdf_url": f"{S3_DB_URL}/data/pdf/{result[0]}?page={result[2]}"
                 }
                 for result in results
             ]

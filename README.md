@@ -1,56 +1,92 @@
-# rag-streaming
+# RAG Streamingプロジェクト概要
 
-docker compose up --build -d
+## 1. プロジェクト概要
+プロジェクト名: RAG Streaming
+目的: PDFドキュメントの目次（TOC）をベクトル化し、ユーザーの質問に基づいて関連する目次を検索・表示するシステム
 
-docker compose ps
+## 2. アーキテクチャ
+- Frontend: ユーザーインターフェース（FastAPI + Jinja2テンプレート）
+- Backend: 検索ロジックと類似度計算を行い、WebSocketを通じて検索結果のリストを返却する（FastAPI）
+- pgvector_toc: ベクトルデータベース（PostgreSQL + pgvector）
+- s3_db: PDFファイルストレージ（FastAPI）
 
-docker compose exec pgvector_db bash
+注: 全てのサービスでFastAPIを採用し、一貫性と高パフォーマンスを実現。
 
-# pgvector環境のみを構築する場合
-docker search pgvector
-docker pull ankane/pgvector:latest
+## 3. docker-compose.yml
+添付ファイル参照。主な特徴：
+- 全サービスでUvicornを使用し、開発環境では`--reload`フラグを有効化
+- ポートマッピングを`127.0.0.1`にバインドしてセキュリティを強化
+- 環境変数を活用してサービス間の接続情報を管理
 
-# もしくは手動でイメージをビルド
-git clone --branch v0.7.2 https://github.com/pgvector/pgvector.git
-cd pgvector
-docker build --pull --build-arg PG_MAJOR=16 -t myuser/pgvector .
+## 4. Dockerfiles
+添付ファイル参照。各サービスに最適化されたDockerfile構成。
 
-# pgvector拡張機能を有効化
-CREATE EXTENSION IF NOT EXISTS vector;
+## 5. 動作仕様
 
-psql -U user -d tocdb
+a. フロントエンド (frontend):
+- FastAPIとJinja2テンプレートを使用してユーザーインターフェースを提供
+- WebSocketを使用してbackendと通信
+- 検索結果を表示
+- PDFリンクを生成し、クリック時にs3_dbからPDFを取得し、Streamingで表示する
 
-# コンテナ外部から接続
-psql -h localhost -U user -d toc_db -p 5432
+b. バックエンド (backend):
+- WebSocketを通じてfrontendからの検索クエリを受け取る
+- OpenAI APIを使用してクエリをベクトル化
+- pgvector_tocデータベースで類似度検索を実行
+- 検索結果をWebSocketを通じてフロントエンドに返す
 
-# コンテナ内部から接続
-psql -h pgvector_db -U user -d toc_db -p 5432
+c. ベクトルデータベース (pgvector_toc):
+- PDFの目次（TOC）データとそのベクトル表現を保存
 
-# .env
-OPENAI_API_KEY=api_key
+d. PDFストレージ (s3_db):
+- PDFファイルを保存
+- frontendでStreaming表示する際にここからPDFを取得する
+- 特定のページのみを抽出して返す機能を提供
 
-5432（左側）: ホストマシン側のポート番号。ホストマシンは、このポートを通じて外部からの接続を受け付けます。この場合、ホストマシンの5432ポートでPostgreSQLデータベースにアクセスできるように設定されます。
+## 6. 主要な機能
+（変更なし）
 
-5432（右側）: コンテナ内のポート番号。コンテナ内で実行されているPostgreSQLデータベースは、このポートを使用して接続を受け付けます。PostgreSQLのデフォルトポート番号は5432であり、この設定ではデフォルトポートを使用します。
+## 7. 環境変数
+- OPENAI_API_KEY: OpenAI APIキー
+- S3_DB_URL: PDFストレージサービスのURL
+- POSTGRES_URL: PostgreSQLデータベースの接続URL
+- POSTGRES_DB: データベース名
+- POSTGRES_USER: データベースユーザー名
+- POSTGRES_PASSWORD: データベースパスワード
+- POSTGRES_HOST: データベースホスト
+- POSTGRES_PORT: データベースポート
 
-# テーブルの中身を削除
-TRUNCATE TABLE toc_table;
+注: セキュリティ向上のため、機密情報は環境変数として管理。
 
-# テーブルの削除
-DROP TABLE toc_table CASCADE;
+## 8. 起動方法
+開発環境:
+```
+docker compose up --build
+```
 
-# バージョン確認
-SELECT version();
-\dx
+本番環境:
+```
+docker compose -f docker-compose.prod.yml up --build
+```
+注: 本番環境用の`docker-compose.prod.yml`ファイルは別途作成が必要。
 
-CREATE TABLE IF NOT EXISTS toc_table (
-    id SERIAL PRIMARY KEY,
-    file_name TEXT,
-    toc TEXT,
-    page INTEGER,
-    toc_halfvec halfvec(3072)
-);
+## 9. アクセス方法
+- フロントエンド: http://localhost:8000
+- バックエンドAPI: http://localhost:8001
+- PDFストレージ: http://localhost:9000
 
-CREATE INDEX ON toc_table USING hnsw (toc_halfvec halfvec_ip_ops);
+## 10. 今後の改善点
+1. API ドキュメンテーション: FastAPIの自動生成されるSwagger UIを活用し、さらに詳細なAPIドキュメントを追加
+2. ログ管理: 構造化ログを導入し、集中ログ管理システムと連携
+3. 設定管理: 環境変数と設定ファイルを組み合わせた柔軟な設定システムの導入
+4. テスト: ユニットテスト、統合テスト、エンドツーエンドテストの追加
+5. コードコメント: 複雑なロジックに対する詳細なインラインコメントの追加
+6. エラーハンドリング: グローバルな例外ハンドラーの実装と、ユーザーフレンドリーなエラーメッセージの提供
+7. 入力バリデーション: Pydanticモデルを活用した厳密な入力検証の実装
+8. パフォーマンス最適化: キャッシュメカニズムの導入と非同期処理の最適化
+9. スケーラビリティ: コンテナオーケストレーションツール（例：Kubernetes）の導入検討
+10. モニタリング: Prometheus、Grafana等を使用したシステムの健全性とパフォーマンスのモニタリング導入
+11. セキュリティ強化: TLS/SSL導入、定期的なセキュリティ監査の実施
+12. CI/CD: 自動テスト、ビルド、デプロイのパイプライン構築
 
-\d+ documents
+注: FastAPIの採用により、API文書化、バリデーション、非同期処理などの実装が容易になりました。

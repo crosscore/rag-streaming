@@ -1,5 +1,6 @@
+<!-- frontend/templates/index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+    <button id="theme-toggle">テーマ切り替え</button>
     <h1>Similar TOC Search</h1>
     <input type="text" id="searchQuery" placeholder="Enter search query">
     <input type="number" id="topN" value="3" min="1" max="10">
@@ -14,36 +16,66 @@
     <div id="results"></div>
 
     <script>
-        const socket = new WebSocket('ws://localhost:8001/ws');
-        const resultsDiv = document.getElementById('results');
+        // テーマ切り替え機能
+        function initializeTheme() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const theme = localStorage.getItem('theme') || 'dark';
 
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.error) {
-                resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
-                return;
+            console.log('Current theme:', theme);
+
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                console.log('Light mode applied');
             }
 
-            const results = data.results;
-            let resultsHtml = '<h2>Search Results:</h2>';
-            results.forEach((result, index) => {
-                resultsHtml += `
-                    <div>
-                        <h3>${index + 1}. <a href="${result.pdf_url}" target="_blank">${result.link_text}</a></h3>
-                        <p>TOC: ${result.toc}</p>
-                        <p>Distance: ${result.distance.toFixed(4)}</p>
-                    </div>
-                `;
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('light-mode');
+                const newTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                console.log('Theme toggled to:', newTheme);
             });
-            resultsDiv.innerHTML = resultsHtml;
-        };
-
-        function search() {
-            const query = document.getElementById('searchQuery').value;
-            const topN = parseInt(document.getElementById('topN').value);
-            resultsDiv.innerHTML = 'Searching...';
-            socket.send(JSON.stringify({ query: query, top_n: topN }));
         }
+
+        // WebSocket接続と検索機能
+        function initializeWebSocket() {
+            const socket = new WebSocket('ws://localhost:8001/ws');
+            const resultsDiv = document.getElementById('results');
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                    return;
+                }
+
+                const results = data.results;
+                let resultsHtml = '<h2>Search Results:</h2>';
+                results.forEach((result, index) => {
+                    resultsHtml += `
+                        <div>
+                            <h3>${index + 1}. <a href="${result.pdf_url}" target="_blank">${result.link_text}</a></h3>
+                            <p>TOC: ${result.toc}</p>
+                            <p>Distance: ${result.distance.toFixed(4)}</p>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = resultsHtml;
+            };
+
+            window.search = function() {
+                const query = document.getElementById('searchQuery').value;
+                const topN = parseInt(document.getElementById('topN').value);
+                resultsDiv.innerHTML = 'Searching...';
+                socket.send(JSON.stringify({ query: query, top_n: topN }));
+            };
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM fully loaded');
+            initializeTheme();
+            initializeWebSocket();
+        });
     </script>
 </body>
 </html>
