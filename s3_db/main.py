@@ -1,23 +1,31 @@
 # s3_db/main.py
 
-from flask import Flask, send_file, request, abort
-from flask_cors import CORS
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from PyPDF2 import PdfReader, PdfWriter
 from io import BytesIO
 
-app = Flask(__name__, static_folder='/app/data')
-CORS(app, resources={r"/data/pdf/*": {"origins": "http://localhost:8000"}})
+app = FastAPI()
 
-@app.route('/data/pdf/<path:filename>')
-def serve_pdf(filename):
+# CORS設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/data/pdf/{filename:path}")
+async def serve_pdf(filename: str, page: int = Query(None)):
     file_path = os.path.join('/app/data/pdf', filename)
     if not os.path.exists(file_path):
-        abort(404)
+        raise HTTPException(status_code=404, detail="File not found")
 
-    page = request.args.get('page', type=int)
     if page is None:
-        return send_file(file_path, mimetype='application/pdf')
+        return FileResponse(file_path, media_type='application/pdf')
 
     try:
         reader = PdfReader(file_path)
@@ -26,16 +34,17 @@ def serve_pdf(filename):
         if 0 <= page - 1 < len(reader.pages):
             writer.add_page(reader.pages[page - 1])
         else:
-            abort(404)
+            raise HTTPException(status_code=404, detail="Page not found")
 
         output = BytesIO()
         writer.write(output)
         output.seek(0)
 
-        return send_file(output, mimetype='application/pdf', as_attachment=False)
+        return StreamingResponse(output, media_type='application/pdf')
     except Exception as e:
         print(f"Error processing PDF: {e}")
-        abort(500)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9000)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=9000)

@@ -29,7 +29,6 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "pgvector_toc")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 
-# S3_DB URL
 S3_DB_URL = os.getenv("S3_DB_URL", "http://localhost:9000")
 
 embeddings = OpenAIEmbeddings(
