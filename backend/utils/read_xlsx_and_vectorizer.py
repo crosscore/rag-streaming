@@ -65,7 +65,7 @@ def process_and_vectorize_xlsx_file(file_name):
                 'file_name': file_name,
                 'sheet_name': sheet_name,
                 'manual': chunk,
-                'vector': normalized_vector
+                'manual_vector': normalized_vector
             })
 
     return pd.DataFrame(processed_data)
