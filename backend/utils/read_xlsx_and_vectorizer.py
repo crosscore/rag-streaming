@@ -9,13 +9,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 S3_DB_URL = os.getenv("S3_DB_URL", "http://s3_db:9000")
+
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
 SEPARATOR = os.getenv("SEPARATOR", "\n")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-CSV_OUTPUT_DIR = os.getenv("CSV_OUTPUT_DIR", "../data/csv")
+XLSX_CSV_OUTPUT_DIR = os.getenv("XLSX_CSV_OUTPUT_DIR", "../data/csv/xlsx")
 
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large",
@@ -73,8 +74,8 @@ def main():
         processed_data = process_and_vectorize_xlsx_file(file_name)
         if not processed_data.empty:
             output_file = f"{os.path.splitext(file_name)[0]}_vector_normalized.csv"
-            os.makedirs(CSV_OUTPUT_DIR, exist_ok=True)
-            processed_data.to_csv(os.path.join(CSV_OUTPUT_DIR, output_file), index=False)
+            os.makedirs(XLSX_CSV_OUTPUT_DIR, exist_ok=True)
+            processed_data.to_csv(os.path.join(XLSX_CSV_OUTPUT_DIR, output_file), index=False)
             print(f"Processed, vectorized, normalized, and saved data from {file_name} to {output_file}")
         else:
             print(f"No data processed for {file_name}")
