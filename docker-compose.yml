@@ -25,9 +25,9 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql://user:password@pgvector_toc:5432/tocdb
-      - S3_DB_URL=${S3_DB_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - S3_DB_URL=${S3_DB_URL}
+      - POSTGRES_URL=postgresql://user:password@pgvector_toc:5432/tocdb
       - POSTGRES_DB=tocdb
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
@@ -37,7 +37,7 @@ services:
       - "127.0.0.1:8001:8001"
     networks:
       - app-network
-    command: python main.py
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
   pgvector_toc:
     build: ./pgvector_toc
