@@ -38,11 +38,13 @@ is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
 if is_docker:
     TOC_DB_HOST = get_env_variable("TOC_DB_INTERNAL_HOST")
     TOC_DB_PORT = get_env_variable("TOC_DB_INTERNAL_PORT")
-    S3_DB_URL = get_env_variable("S3_DB_INTERNAL_URL")
+    S3_DB_INTERNAL_URL = f"http://{get_env_variable('S3_DB_INTERNAL_HOST')}:{get_env_variable('S3_DB_INTERNAL_PORT')}"
 else:
     TOC_DB_HOST = get_env_variable("TOC_DB_EXTERNAL_HOST", "localhost")
     TOC_DB_PORT = get_env_variable("TOC_DB_EXTERNAL_PORT")
-    S3_DB_URL = get_env_variable("S3_DB_EXTERNAL_URL")
+
+# クライアント側で使用するS3_DB_URL
+S3_DB_CLIENT_URL = get_env_variable("S3_DB_EXTERNAL_URL")
 
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large",
@@ -93,7 +95,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "page": result[2],
                     "distance": float(result[4]),
                     "link_text": f"{result[0]}, p.{result[2]}",
-                    "pdf_url": f"{S3_DB_URL}/data/pdf/{result[0]}?page={result[2]}"
+                    "pdf_url": f"{S3_DB_CLIENT_URL}/data/pdf/{result[0]}?page={result[2]}"
                 }
                 for result in results
             ]
